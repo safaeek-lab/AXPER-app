@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<title>Shift · AXPER for experts</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/web/web.css">
+</head>
+<body class="web" data-page="shift">
+<div class="preview-bar" role="note">Preview · shifts, pay and dates are sample data</div>
+
+<header class="site-head"><div class="wrap" style="padding-left:28px;padding-right:28px">
+<a href="/web/dashboard.html#shifts" style="display:flex;align-items:center;gap:6px;min-height:44px;font-size:15px;font-weight:500;text-decoration:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Back to shifts</a>
+<span class="logo" style="font-size:22px">AXPER<span class="dot">.</span></span>
+</div></header>
+
+<div class="wrap" style="padding:32px 28px 64px;display:flex;flex-direction:column;gap:28px">
+
+<div class="banner" id="banner" hidden role="status">
+<div class="row"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+<div><div id="bannerTitle" style="font-size:18px;font-weight:700">You’re booked</div><div style="font-size:14px;color:#2B3410">We’ll remind you the day before and 2 hours before.</div></div></div>
+<button type="button" class="btn inline dark small" data-act="ics" style="min-height:48px;font-size:15px">Add to calendar</button>
+</div>
+
+<div>
+<div class="row" id="tags" style="gap:8px;flex-wrap:wrap"></div>
+<h1 id="title" style="margin-top:14px;font-size:clamp(32px,4vw,40px)"></h1>
+<p class="m" id="sub" style="margin-top:6px;font-size:17px"></p>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+<main style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:24px">
+<section aria-label="The brief" class="card" style="padding:8px 24px">
+<div class="item"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8F169" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.5-6-10a6 6 0 0 1 12 0c0 4.5-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg></span>
+<div style="flex:1;min-width:0"><p class="lbl">Where</p><p class="val" id="where" style="font-size:17px"></p><p class="m" id="whereNote"></p>
+<a class="map" id="map" href="#" target="_blank" rel="noopener">Open map</a></div></div>
+<div class="item"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8F169" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+<div style="flex:1;min-width:0"><p class="lbl">When</p><p class="val" id="when" style="font-size:17px"></p><p class="m" id="whenNote"></p></div></div>
+<div class="item"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8F169" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4l-4 3 2 4 2-1v10h8V10l2 1 2-4-4-3c-1 2-2.5 3-4 3s-3-1-4-3z"/></svg></span>
+<div style="flex:1;min-width:0"><p class="lbl">Wear</p><p class="val" id="wear" style="font-size:17px"></p><p class="m" id="wearNote"></p></div></div>
+<div class="item"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8F169" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></span>
+<div style="flex:1;min-width:0"><p class="lbl">What you’ll do</p><ul id="tasks" style="margin:6px 0 0;padding-left:20px;color:#E4E4E7;font-size:16px;line-height:1.7"></ul></div></div>
+<div class="item"><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8F169" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>
+<div style="flex:1;min-width:0"><p class="lbl">Contact on the day</p><p class="val" id="contact" style="font-size:17px"></p><p class="m" id="contactNote"></p></div></div>
+</section>
+
+<section aria-label="Team" class="card row between" style="gap:16px;flex-wrap:wrap">
+<div><p class="lbl">Your team</p><p class="val" id="teamText" style="font-size:17px"></p></div>
+<div class="stack" id="team"></div>
+</section>
+</main>
+
+<aside aria-label="Pay and booking" style="flex:1 1 320px;min-width:0;max-width:420px;display:flex;flex-direction:column;gap:16px">
+<div class="card" style="display:flex;flex-direction:column;gap:16px">
+<p class="lbl">Your pay</p>
+<p id="pay" style="margin:0;font-size:44px;font-weight:700;letter-spacing:-.02em"></p>
+<div class="lines" id="payRows"></div>
+<div id="actions" style="display:flex;flex-direction:column;gap:10px" aria-live="polite"></div>
+</div>
+<div class="card" style="display:flex;flex-direction:column;gap:12px;padding:20px">
+<div class="row" style="align-items:flex-start;gap:10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8F169" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><p class="m" id="keepPay" style="color:#E4E4E7"></p></div>
+<div class="row" style="align-items:flex-start;gap:10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8F169" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:2px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><p class="m" id="cancelNote" style="color:#E4E4E7"></p></div>
+</div>
+</aside>
+</div>
+</div>
+<script src="/data.js"></script>
+<script src="/web/web.js"></script>
+</body>
+</html>

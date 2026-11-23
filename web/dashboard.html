@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<title>Home · AXPER for experts</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/web/web.css">
+</head>
+<body class="web" data-page="dashboard">
+<div class="preview-bar" role="note">Preview · shifts, pay and dates are sample data</div>
+
+<header class="site-head"><div class="wrap wide" style="padding-left:28px;padding-right:28px">
+<a class="logo" href="/web/experts.html" style="text-decoration:none;font-size:22px">AXPER<span class="dot">.</span></a>
+<div class="row" style="gap:10px">
+<button type="button" class="pill round" style="position:relative" aria-label="Notifications, 2 new" data-soon="Notifications are coming in the next build"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="dot-badge"></span></button>
+<button type="button" class="pill" data-lang aria-label="Language: English" style="font-size:14px">EN</button>
+<span class="av" id="me" aria-label="Your profile">ME</span>
+</div>
+</div></header>
+
+<div class="wrap wide" style="padding:28px;display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+
+<nav class="side" aria-label="Expert menu">
+<a href="#top" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/></svg>Home</a>
+<a href="#shifts"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>Find shifts</a>
+<a href="#next"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/></svg>My shifts</a>
+<a href="#earnings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg>Earnings</a>
+<a href="#profile"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Profile</a>
+<a href="#help"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/></svg>Help</a>
+</nav>
+
+<main id="top" style="flex:999 1 640px;min-width:0;display:flex;flex-direction:column;gap:28px">
+<div class="row between" style="align-items:flex-end;gap:16px;flex-wrap:wrap">
+<div><p class="m">Friday 13 November</p><h1 id="hello" style="margin-top:4px;font-size:clamp(28px,3vw,36px)">Hello</h1></div>
+<div class="row" id="badges" style="gap:8px;flex-wrap:wrap"></div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:20px">
+<section id="next" aria-label="Next shift" class="card next-card" style="flex:2 1 420px;min-width:0;padding:26px"></section>
+<section id="earnings" aria-label="Earnings" class="card" style="flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:16px">
+<p class="lbl">Earnings · November</p>
+<p id="earnTotal" style="margin:0;font-size:40px;font-weight:700;letter-spacing:-.02em">HK$0</p>
+<div class="lines" id="earnLines"></div>
+<a href="/#/shifts" style="font-size:15px">See all payouts</a>
+</section>
+</div>
+
+<section id="shifts" aria-label="Shifts for you" style="display:flex;flex-direction:column;gap:16px">
+<div class="row between" style="gap:12px;flex-wrap:wrap">
+<h2 style="font-size:24px;font-weight:700">Shifts for you</h2>
+<div class="chips" role="group" aria-label="Filter shifts">
+<button type="button" class="chip" data-filter="All" aria-pressed="true">All</button>
+<button type="button" class="chip" data-filter="This week" aria-pressed="false">This week</button>
+<button type="button" class="chip" data-filter="Usher" aria-pressed="false">Usher</button>
+<button type="button" class="chip" data-filter="Registration" aria-pressed="false">Registration</button>
+<button type="button" class="chip" data-filter="Weekends" aria-pressed="false">Weekends</button>
+</div>
+</div>
+<div id="shiftList" style="display:flex;flex-direction:column;gap:16px" aria-live="polite"></div>
+</section>
+
+<div style="display:flex;flex-wrap:wrap;gap:20px">
+<section id="profile" aria-label="Profile checklist" class="card" style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:14px">
+<div class="row between"><h2 style="font-size:19px">Get offered more shifts</h2><span class="m s" id="checkCount"></span></div>
+<div class="progress" id="checkBars" aria-hidden="true"></div>
+<div id="checkRows" style="display:flex;flex-direction:column;gap:12px"></div>
+</section>
+<section id="help" aria-label="Help" class="card" style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:12px">
+<h2 style="font-size:19px">Something wrong on the day?</h2>
+<p class="m">Running late, can’t find the entrance or a problem on site: our team is on call during every shift.</p>
+<div class="row" style="gap:10px;flex-wrap:wrap;margin-top:4px">
+<button type="button" class="pill" data-soon="Messages to AXPER support are coming in the next build">Message AXPER</button>
+<button type="button" class="pill" data-soon="We’ve told the organiser you’re running late (preview)">I’m running late</button>
+</div>
+</section>
+</div>
+</main>
+</div>
+<script src="/data.js"></script>
+<script src="/web/web.js"></script>
+</body>
+</html>

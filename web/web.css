@@ -1,0 +1,78 @@
+/* AXPER website. Loaded after /styles.css, so it reuses the app's colour tokens and
+   .card / .btn / .chip / .tag / .input / .code / .progress, and only adds desktop layout. */
+body.web{display:block;min-height:100dvh}
+:where(.web) a{color:inherit}
+:where(.web) a:not(.btn):hover{color:var(--lime)}
+.wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+.wide{max-width:1280px}
+.site-head{border-bottom:1px solid #1E1F23}
+.site-head .wrap{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}
+.site-head .logo{font-size:24px}
+.site-nav{display:flex;align-items:center;gap:28px;flex-wrap:wrap;font-size:15px;color:var(--muted)}
+.site-nav a{text-decoration:none;color:var(--muted)}
+.site-nav a[aria-current="page"]{color:var(--text)}
+.pill{min-height:44px;padding:0 18px;border-radius:22px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 15px Inter,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.pill.round{width:44px;padding:0}
+.eyebrow{letter-spacing:.12em}
+.lbl{margin:0;color:var(--muted);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.h-xl{margin:0;font-size:clamp(40px,6vw,68px);line-height:1.05;font-weight:700;letter-spacing:-.03em}
+.h-l{margin:0;font-size:clamp(30px,4vw,40px);line-height:1.1;font-weight:700;letter-spacing:-.02em}
+.h2{margin:0;font-size:clamp(26px,3vw,32px);font-weight:700;letter-spacing:-.02em}
+.lead{margin:0;color:var(--muted);font-size:clamp(17px,1.6vw,20px);line-height:1.5}
+.web .m{font-size:16px;line-height:1.55}
+.web .card{border-radius:20px;padding:22px}
+.ct{margin:0 0 8px;font-size:19px;font-weight:600}
+.num{width:36px;height:36px;border-radius:18px;background:var(--lime);color:var(--lime-ink);font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--min,250px)),1fr))}
+.split{display:flex;flex-wrap:wrap;gap:56px;align-items:center}
+.btn.inline{width:auto;display:inline-flex;min-height:52px;font-size:16px;padding:0 24px}
+.btn.dark{background:#000;color:#fff}
+.btn.dark:hover{color:var(--lime)}
+.btn.ghost:hover{color:var(--text);border-color:#52525B}
+.site-foot{margin-top:72px;border-top:1px solid #1E1F23}
+.site-foot .wrap{padding-top:28px;padding-bottom:36px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:14px}
+.tabbar{display:flex;gap:8px;flex-wrap:wrap}
+.tabbar [role="tab"]{min-height:44px;padding:0 18px;border-radius:22px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 15px Inter,sans-serif}
+.tabbar [aria-selected="true"]{background:#fff;color:#000;border-color:#fff}
+.web .input{background:#000;border-color:var(--line2)}
+.web .prefix{background:#000}
+.web .tag{height:28px}
+.tag.lime{background:var(--lime);color:var(--lime-ink);font-weight:600}
+.tag.accent{color:var(--lime)}
+/* photo strip */
+.strip{overflow:hidden}
+.track{display:flex;width:max-content;animation:axScroll 40s linear infinite}
+.track:hover{animation-play-state:paused}
+.track img{display:block;width:360px;height:270px;object-fit:cover;border-radius:18px;margin-right:16px;flex:none}
+@keyframes axScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.track{animation:none}.strip{overflow-x:auto}}
+@media (max-width:640px){.track img{width:260px;height:195px}}
+/* dashboard */
+.side{flex:1 1 200px;max-width:240px;display:flex;flex-direction:column;gap:4px}
+.side a{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 14px;border-radius:12px;color:var(--muted);text-decoration:none;font-size:15px;font-weight:500}
+.side a[aria-current="page"]{background:#1A1B1E;color:var(--text)}
+@media (max-width:900px){.side{max-width:none;flex:1 1 100%;flex-direction:row;overflow-x:auto}.side a{flex:none}}
+.next-card{border-color:#3D4A1F;background:linear-gradient(160deg,#141A08 0%,#111214 55%);display:flex;flex-direction:column;gap:18px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.facts p:last-child,.val{margin:4px 0 0;font-size:16px;font-weight:600}
+.line{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.lines{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.shift-row{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+.shift-row .title{font-size:18px;font-weight:600}
+.dot-badge{position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:4px;background:var(--lime)}
+.av{background:#26272B}
+.stack .av{border-color:var(--card)}
+/* shift details */
+.item{display:flex;gap:16px;padding:18px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .ico,.ico-box{width:44px;height:44px;border-radius:12px;background:#000;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none}
+.map{margin-top:12px;height:150px;border-radius:14px;border:1px solid var(--line);background:repeating-linear-gradient(45deg,#0C0C0D 0 12px,#111214 12px 24px);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;text-decoration:none}
+.banner{background:var(--lime);color:#000;border-radius:18px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.booked-pill{min-height:56px;border-radius:14px;border:1px solid var(--lime);color:var(--lime);font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:center}
+.ticks{display:flex;flex-direction:column;gap:14px;font-size:16px}
+.ticks div{display:flex;gap:12px;align-items:center}
+.or{display:flex;align-items:center;gap:12px;color:#71717A;font-size:13px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.web .codes{gap:8px}
+.web .code{background:#000}
+[hidden]{display:none!important}

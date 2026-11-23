@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="AXPER: verified event experts in Hong Kong, booked in a few taps.">
+<title>AXPER · Event experts, simply booked</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/web/web.css">
+</head>
+<body class="web" data-page="home">
+<div class="preview-bar" role="note">Preview · codes, ID checks and payments are simulated</div>
+
+<header class="site-head"><div class="wrap wide">
+<a class="logo" href="/web/" style="text-decoration:none">AXPER<span class="dot">.</span></a>
+<nav class="site-nav" aria-label="Main">
+<a href="/web/" aria-current="page">For Organisers</a>
+<a href="/web/experts.html">For Experts</a>
+<span>Terms</span><span>About</span>
+<button type="button" class="pill round" data-lang aria-label="Language"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg></button>
+<a class="pill" href="/web/signin.html">Sign in</a>
+</nav>
+</div></header>
+
+<main>
+<section class="wrap wide split" style="padding-top:72px;padding-bottom:72px;gap:64px">
+<div style="flex:1 1 460px;min-width:0">
+<h1 class="h-xl">Event experts, simply booked.</h1>
+<p class="lead" style="margin-top:20px">Verified, briefed and covered. Book in a few taps.</p>
+<div class="tabbar" role="tablist" aria-label="Who is booking" style="margin:32px 0 16px">
+<button type="button" role="tab" aria-selected="true" aria-controls="audienceText">Brands</button>
+<button type="button" role="tab" aria-selected="false" aria-controls="audienceText" tabindex="-1">Organisers</button>
+<button type="button" role="tab" aria-selected="false" aria-controls="audienceText" tabindex="-1">Event agencies</button>
+<button type="button" role="tab" aria-selected="false" aria-controls="audienceText" tabindex="-1">Marketing agencies</button>
+</div>
+<p class="m" id="audienceText" role="tabpanel" aria-live="polite">For premium launches and activations, staffed by experts we have already vetted.</p>
+<p class="m" style="margin-top:24px">Want to work events? <a href="/web/experts.html" style="color:#fff;text-decoration:underline">Join as an expert</a></p>
+</div>
+<form class="card" id="bookForm" novalidate style="flex:1 1 360px;max-width:440px;padding:28px;display:flex;flex-direction:column;gap:16px">
+<h2 style="font-size:22px;font-weight:700">Tell us about your event</h2>
+<div><label class="label" for="date">Date</label><input class="input" id="date" name="date" value="Sat 14 Nov" required></div>
+<div><label class="label" for="place">Place</label><input class="input" id="place" name="place" value="Hong Kong Convention Centre" autocomplete="street-address" required></div>
+<div><label class="label" for="count">Experts needed</label><input class="input" id="count" name="count" type="number" inputmode="numeric" min="1" max="10" value="6" required></div>
+<p class="m s" id="bookErr" role="alert" style="color:#FF8A80;margin:0"></p>
+<button class="btn" type="submit">Get my team</button>
+<p class="m s center" style="font-size:14px">See the price before you pay.</p>
+</form>
+</section>
+
+<div class="strip" aria-label="Experts at work">
+<div class="track">
+<img src="/web/img/waiters.jpg" alt="Waiters in white shirts and black aprons serving champagne" style="object-position:50% 38%">
+<img src="/web/img/crew.jpg" alt="Event crew in black with headsets coordinating outdoors" style="object-position:50% 39%">
+<img src="/web/img/planner.jpg" alt="Event planner setting a place card on a dinner table" style="object-position:50% 85%">
+<img src="/web/img/setup.jpg" alt="Setup crew in hi-vis vests building tables" style="object-position:50% 10%">
+<img src="/web/img/ambassador.jpg" alt="Brand ambassador greeting a guest at a pop-up counter" style="object-position:50% 39%">
+<img src="/web/img/waiters.jpg" alt="" aria-hidden="true" style="object-position:50% 38%">
+<img src="/web/img/crew.jpg" alt="" aria-hidden="true" style="object-position:50% 39%">
+<img src="/web/img/planner.jpg" alt="" aria-hidden="true" style="object-position:50% 85%">
+<img src="/web/img/setup.jpg" alt="" aria-hidden="true" style="object-position:50% 10%">
+<img src="/web/img/ambassador.jpg" alt="" aria-hidden="true" style="object-position:50% 39%">
+</div>
+</div>
+
+<section class="wrap wide" style="padding-top:64px">
+<h2 class="h2" style="margin-bottom:28px">How it works</h2>
+<div class="grid">
+<div class="card"><div class="num">1</div><p class="ct">Share your event</p><p class="m">Date, place, role and how many experts.</p></div>
+<div class="card"><div class="num">2</div><p class="ct">Review price and team</p><p class="m">See the all-in price and who is coming.</p></div>
+<div class="card"><div class="num">3</div><p class="ct">Confirm</p><p class="m">We brief the experts and track the event day.</p></div>
+</div>
+</section>
+
+<section class="wrap wide" style="padding-top:64px" id="pricing" aria-labelledby="pricingTitle">
+<h2 class="h2" id="pricingTitle">Plans for organisers</h2>
+<p class="m" style="margin:8px 0 28px">Start free. Experts’ pay is shown before you confirm each booking.</p>
+<div class="grid" style="--min:280px">
+<div class="card" style="padding:28px;display:flex;flex-direction:column;gap:16px">
+<div><p class="ct" style="margin:0">Lite</p><p style="margin:6px 0 0;font-size:32px;font-weight:700">Free</p></div>
+<ul class="plan-list" data-plan-list="lite"></ul>
+<a class="btn ghost" href="/#/organiser" data-plan-pick="lite" style="margin-top:auto">Start free</a>
+</div>
+<div class="card" style="padding:28px;display:flex;flex-direction:column;gap:16px;border-color:var(--lime)">
+<div><p class="ct" style="margin:0">Pro</p><p style="margin:6px 0 0;font-size:32px;font-weight:700" id="proPrice">Monthly or yearly</p></div>
+<ul class="plan-list" data-plan-list="pro"></ul>
+<a class="btn" href="/#/organiser" data-plan-pick="pro" style="margin-top:auto">Choose Pro</a>
+</div>
+</div>
+</section>
+
+<section class="wrap wide" style="padding-top:64px">
+<h2 class="h2" style="margin-bottom:28px">Built to be trusted</h2>
+<div class="grid" style="--min:220px">
+<div class="card"><p class="ct">Verified</p><p class="m">Every expert checks their ID before a first shift.</p></div>
+<div class="card"><p class="ct">Graded</p><p class="m">Tiers come from real records, not self-ratings.</p></div>
+<div class="card"><p class="ct">Briefed</p><p class="m">Dress code, role and briefing, done before the day.</p></div>
+<div class="card"><p class="ct">Covered</p><p class="m">We check event and expert coverage before dispatch.</p></div>
+</div>
+</section>
+</main>
+
+<footer class="site-foot"><div class="wrap wide"><span>AXPER<span class="dot" style="color:var(--lime)">.</span></span><span>Hong Kong</span></div></footer>
+<script src="/data.js"></script>
+<script src="/web/web.js"></script>
+</body>
+</html>
