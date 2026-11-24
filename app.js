@@ -1,9 +1,12 @@
-/* Axper expert app — preview build (no backend yet).
-   Everything is saved in this browser only. Codes, ID checks and payments are simulated. */
+/* Axper app for organisers and experts.
+   With config.js filled in, sign-in uses real SMS codes and accounts, events and availability are saved in Supabase
+   (see db.js). With config.js empty it runs as a preview: everything is saved in this browser only.
+   ID checks, payments, matching and offers are still simulated in both modes. */
 (function () {
   'use strict';
 
   var KEY = window.AXPER.KEY;
+  var DB = window.AXPER_DB || { live: false };
   var ROLES = ['Usher', 'Registration', 'Booth', 'Setup crew'];
   var LANGS = ['Cantonese', 'English', 'Mandarin'];
   var DAYS = [['mon', 'Mon'], ['tue', 'Tue'], ['wed', 'Wed'], ['thu', 'Thu'], ['fri', 'Fri'], ['sat', 'Sat'], ['sun', 'Sun']];
@@ -301,7 +304,8 @@
     return head +
       '<div><h1>Enter your code</h1><p class="m" style="margin-top:6px">Sent to +852 ' + esc(org ? state.org.phone : state.phone) + '</p></div>' +
       '<div class="codes" id="codes">' + boxes + '</div>' +
-      '<p class="m s">Preview: any 6 digits work.</p>' +
+      '<p class="m s">' + (DB.live ? 'It can take up to a minute to arrive.' : 'Preview: any 6 digits work.') + '</p>' +
+      '<p class="m s" id="codeErr" role="alert" style="color:#FF8A80"></p>' +
       '<div class="grow"></div><button class="btn" id="verifyCode" disabled>Continue</button>' +
       '<button type="button" class="btn ghost small" data-act="resend">Resend code</button>';
   };
@@ -445,7 +449,13 @@
         ev[fields[k][1]] = v;
       }
       if (!/\d{1,2}:\d{2}\D+\d{1,2}:\d{2}/.test(ev.time)) { err.textContent = 'Write the time like 09:00 - 17:00.'; f.evTime.focus(); return; }
-      state.org.booked = false; state.org.swapped = false; save(); go('/review'); return;
+      state.org.booked = false; state.org.swapped = false; save();
+      if (!DB.live) { go('/review'); return; }
+      busy(f, true);
+      DB.saveEvent(ev, state.org.eventId, { backup: !!state.org.backup }).then(function (id) {
+        state.org.eventId = id; save(); go('/review');
+      }, function (x) { busy(f, false); err.textContent = x.message; });
+      return;
     }
     var digits = cleanPhone(f.phone.value);
     if (f.id === 'orgForm') {
@@ -454,9 +464,9 @@
       if (!on) { err.textContent = 'Add your name so experts know who is hosting.'; f.name.focus(); return; }
       state.org.name = on; state.org.company = f.company.value.trim(); state.org.phone = fmtPhone(digits);
       if (state.org.company && state.org.event.name === freshOrg().event.name) state.org.event.name = state.org.company;
-      state.mode = 'organiser'; save(); go('/code'); return;
+      state.mode = 'organiser'; state.flow = 'organiser'; save(); sendCode(digits, f, err); return;
     }
-    state.mode = 'expert';
+    state.mode = 'expert'; state.flow = f.id === 'joinForm' ? 'join' : 'signin';
     if (digits.length !== 8) { err.textContent = 'Enter an 8-digit Hong Kong number.'; f.phone.focus(); return; }
     if (f.id === 'joinForm') {
       var nm = f.name.value.trim();
@@ -465,8 +475,76 @@
       state.name = nm;
     }
     state.phone = fmtPhone(digits); save();
-    go('/code');
+    sendCode(digits, f, err);
   });
+
+  /* ---------- live mode: real codes and saving (db.js) ---------- */
+  function busy(form, on) {
+    var b = form && form.querySelector('button[type="submit"], #verifyCode');
+    if (!b) return;
+    if (on) { b.dataset.label = b.textContent; b.textContent = 'One moment…'; b.disabled = true; }
+    else { b.textContent = b.dataset.label || b.textContent; b.disabled = false; }
+  }
+  function sendCode(digits, form, err) {
+    if (!DB.live) { go('/code'); return; }
+    busy(form, true);
+    DB.sendCode(digits).then(function () { go('/code'); }, function (x) { busy(form, false); err.textContent = x.message; });
+  }
+  /* Puts what the database knows about this person into the app's state. Returns where to go next. */
+  function applyMe(me) {
+    /* someone else signed in on this phone: start clean so nothing of the last person shows */
+    if (state.uid && state.uid !== me.id) { var lang = state.lang; state = fresh(); state.lang = lang; }
+    state.uid = me.id;
+    if (me.role === 'organiser') {
+      var o = state.org, org = me.org || {};
+      o.signedIn = true; o.name = me.name; o.phone = me.phone; o.company = org.name || '';
+      o.plan = org.plan_choice || ''; o.planPick = o.plan || o.planPick; o.backup = o.plan === 'pro';
+      if (me.event) {
+        var e = me.event;
+        o.event = { name: e.name, date: e.date, time: e.time, place: e.place, role: e.role, count: e.count };
+        o.eventId = e.id; o.brief = e.brief; o.backup = e.backup;
+      } else if (!o.eventId) {
+        o.event.date = ''; /* the sample date is for the preview only */
+      }
+      state.mode = 'organiser';
+      return o.booked ? '/booked' : o.plan ? '/event' : '/plan';
+    }
+    if (me.role === 'expert') {
+      state.signedIn = true; state.name = me.name; state.phone = me.phone; state.mode = 'expert';
+      if (me.expert) {
+        state.roles = {}; me.expert.roles.forEach(function (r) { state.roles[r] = true; });
+        state.langs = {}; me.expert.languages.forEach(function (l) { state.langs[l] = true; });
+      }
+      if (me.days && Object.keys(me.days).length) { state.days = me.days; state.times = me.times; }
+      return state.verify === 'none' && !state.idPhoto ? '/verify' : '/offers';
+    }
+    return '/';
+  }
+  function picked(map) { return Object.keys(map).filter(function (k) { return map[k]; }); }
+  function liveVerify(btn) {
+    var err = document.getElementById('codeErr');
+    var code = Array.prototype.map.call(app.querySelectorAll('.code'), function (b) { return b.value; }).join('');
+    var digits = cleanPhone(state.mode === 'organiser' ? state.org.phone : state.phone);
+    btn.disabled = true; btn.textContent = 'Checking…';
+    function fail(x) { btn.disabled = false; btn.textContent = 'Continue'; err.textContent = x.message; }
+    DB.verifyCode(digits, code).then(function () {
+      if (state.flow === 'organiser') return DB.saveOrganiser(state.org.name, state.org.company);
+      if (state.flow === 'join') return DB.saveExpert(state.name, picked(state.roles), picked(state.langs))
+        .then(function () { return DB.saveAvailability(state.days, state.times); });
+    }).then(function () { return DB.loadMe(); }).then(function (me) {
+      if (!me) {
+        DB.signOut();
+        throw new Error('There’s no account for this number yet. Go back and choose “I need experts” or “I want to work”.');
+      }
+      var next = applyMe(me); save(); go(next);
+    }).catch(function (x) {
+      /* a number registered for the other side: sign out so nothing half-made is left */
+      if (/already registered/.test(x.message)) DB.signOut();
+      fail(x);
+    });
+  }
+  var timers = {};
+  function later(key, fn) { clearTimeout(timers[key]); timers[key] = setTimeout(function () { fn().catch(function () { toast('Couldn’t save. Check your connection.'); }); }, 700); }
 
   app.addEventListener('click', function (e) {
     var t = e.target.closest('button'); if (!t) return;
@@ -474,6 +552,7 @@
       var g = t.dataset.toggle, v = t.dataset.val;
       state[g][v] = !state[g][v]; save();
       t.setAttribute('aria-pressed', String(!!state[g][v]));
+      if (DB.live && state.signedIn && (g === 'days' || g === 'times')) later('avail', function () { return DB.saveAvailability(state.days, state.times); });
       return;
     }
     if (t.dataset.lang) { toast('繁體中文 and 简体中文 are coming in the next build'); return; }
@@ -482,6 +561,7 @@
       Array.prototype.forEach.call(app.querySelectorAll('[data-pick="' + t.dataset.pick + '"]'), function (b) { b.setAttribute('aria-pressed', String(b === t)); });
       return;
     }
+    if (t.id === 'verifyCode' && DB.live) { liveVerify(t); return; }
     if (t.id === 'verifyCode' && state.mode === 'organiser') {
       state.org.signedIn = true; save(); go(state.org.booked ? '/booked' : state.org.plan ? '/event' : '/plan'); return;
     }
@@ -495,12 +575,17 @@
       return;
     }
     var act = t.dataset.act, id = t.dataset.id;
-    if (act === 'resend') { toast('New code sent'); return; }
+    if (act === 'resend') {
+      if (!DB.live) { toast('New code sent'); return; }
+      DB.sendCode(cleanPhone(state.mode === 'organiser' ? state.org.phone : state.phone))
+        .then(function () { toast('New code sent'); }, function (x) { toast(x.message); });
+      return;
+    }
     if (act === 'accept') { state.offers[id] = 'accepted'; save(); render(); toast('You’re booked'); return; }
     if (act === 'decline') { state.offers[id] = 'declined'; save(); render(); return; }
     if (act === 'undo') { delete state.offers[id]; save(); render(); return; }
     if (act === 'qr') { state.showQr = !state.showQr; save(); render(); return; }
-    if (act === 'reset') { state = fresh(); save(); go('/'); return; }
+    if (act === 'reset') { DB.live && DB.signOut(); state = fresh(); save(); go('/'); return; }
     /* organiser */
     var o = state.org;
     if (act === 'less' || act === 'more') {
@@ -512,6 +597,7 @@
     if (t.dataset.plan) { o.planPick = t.dataset.plan; save(); render(); return; }
     if (act === 'choosePlan') {
       o.plan = o.planPick === 'pro' ? 'pro' : 'lite'; o.backup = o.plan === 'pro'; save();
+      if (DB.live) DB.setPlanChoice(o.plan).catch(function () { toast('Couldn’t save your plan. Check your connection.'); });
       go(o.booked ? '/booked' : '/event'); toast(o.plan === 'pro' ? 'You’re on Pro' : 'You’re on Lite'); return;
     }
     if (act === 'showAll') { o.showAll = true; save(); render(); return; }
@@ -532,16 +618,31 @@
   }
 
   app.addEventListener('input', function (e) {
-    if (e.target.hasAttribute && e.target.hasAttribute('data-brief')) { state.org.brief = e.target.value; save(); }
+    if (e.target.hasAttribute && e.target.hasAttribute('data-brief')) {
+      state.org.brief = e.target.value; save();
+      if (DB.live) later('brief', function () { return DB.saveEventField(state.org.eventId, { brief: state.org.brief }); });
+    }
   });
 
   app.addEventListener('change', function (e) {
-    if (e.target.dataset && e.target.dataset.check === 'backup') { state.org.backup = e.target.checked; save(); return; }
+    if (e.target.dataset && e.target.dataset.check === 'backup') {
+      state.org.backup = e.target.checked; save();
+      if (DB.live) later('backup', function () { return DB.saveEventField(state.org.eventId, { backup: state.org.backup }); });
+      return;
+    }
     var key = e.target.dataset && e.target.dataset.file;
     if (key && e.target.files && e.target.files.length) { state[key] = true; save(); render(); }
   });
 
   /* finish a review that was interrupted by closing the page */
   if (state.verify === 'review') setTimeout(function () { state.verify = 'verified'; save(); if (location.hash === '#/offers') render(); }, 4000);
-  render();
+
+  if (!DB.live) { render(); return; }
+  /* live: the signed-in session decides who you are, not what this browser remembers */
+  var bar = document.querySelector('.preview-bar');
+  if (bar) bar.textContent = 'Test version · ID checks, offers and payments are still simulated';
+  DB.session().then(function (id) {
+    if (!id) { state.signedIn = false; state.org.signedIn = false; state.uid = null; save(); return null; }
+    return DB.loadMe().then(function (me) { if (me) { applyMe(me); save(); } });
+  }).catch(function () { toast('Couldn’t reach AXPER. Check your connection.'); }).then(render);
 })();
