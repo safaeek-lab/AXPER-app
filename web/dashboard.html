@@ -36,7 +36,7 @@
 
 <main id="top" style="flex:999 1 640px;min-width:0;display:flex;flex-direction:column;gap:28px">
 <div class="row between" style="align-items:flex-end;gap:16px;flex-wrap:wrap">
-<div><p class="m">Friday 13 November</p><h1 id="hello" style="margin-top:4px;font-size:clamp(28px,3vw,36px)">Hello</h1></div>
+<div><p class="m" id="today">Today</p><h1 id="hello" style="margin-top:4px;font-size:clamp(28px,3vw,36px)">Hello</h1></div>
 <div class="row" id="badges" style="gap:8px;flex-wrap:wrap"></div>
 </div>
 
@@ -81,7 +81,10 @@
 </div>
 </main>
 </div>
+<script src="/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="/data.js"></script>
+<script src="/db.js"></script>
 <script src="/web/web.js"></script>
 </body>
 </html>

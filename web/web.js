@@ -3,6 +3,7 @@
 (function () {
   'use strict';
   var A = window.AXPER, OFFERS = A.OFFERS;
+  var DB = window.AXPER_DB || { live: false };
   var page = document.body.getAttribute('data-page');
 
   /* ---------- state shared with app.js ---------- */
@@ -34,6 +35,44 @@
   }
   /* "today" for the sample shifts, which are all in November */
   var TODAY = 13;
+
+  /* ---------- live mode: the signed-in account fills in the shared state (same fields as app.js) ---------- */
+  function hkTime(iso) {
+    var g = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Hong_Kong', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
+      .formatToParts(new Date(iso)).forEach(function (x) { g[x.type] = x.value; });
+    return g.weekday + ' ' + g.day + ' ' + g.month + ', ' + g.hour + ':' + g.minute;
+  }
+  function applyExpert(me) {
+    if (state.uid && state.uid !== me.id) state = { offers: {} }; /* a different person signed in on this browser */
+    var ex = me.expert || {}, s = ex.status;
+    state.uid = me.id; state.signedIn = true; state.mode = 'expert'; state.name = me.name; state.phone = me.phone;
+    state.roles = {}; (ex.roles || []).forEach(function (r) { state.roles[r] = true; });
+    state.langs = {}; (ex.languages || []).forEach(function (l) { state.langs[l] = true; });
+    if (me.days && Object.keys(me.days).length) { state.days = me.days; state.times = me.times; }
+    state.verify = s === 'approved' ? 'verified' : s === 'paused' ? 'paused' : s === 'id_review' || s === 'interview' ? 'review' : 'none';
+    state.interviewAt = ex.interview_at ? hkTime(ex.interview_at) : '';
+    state.offers = state.offers || {};
+    save(state);
+  }
+  /* For pages that need an expert: resolves true when signed in, otherwise sends to sign-in. */
+  function liveExpert() {
+    return DB.session().then(function (id) {
+      if (!id) return null;
+      return DB.loadMe();
+    }).then(function (me) {
+      if (me && me.role === 'expert') { applyExpert(me); return true; }
+      if (me && me.role === 'organiser') { location.replace('/#/'); return false; } /* organisers use the app */
+      state.signedIn = false; save(state);
+      location.replace('signin.html?next=' + encodeURIComponent(location.pathname.split('/').pop() + location.search));
+      return false;
+    }).catch(function () { toast('Couldn’t reach AXPER. Check your connection.'); return false; });
+  }
+  function whenSignedIn(fn) {
+    if (!DB.live) { if (!needSignIn()) fn(); return; }
+    var bar = document.querySelector('.preview-bar');
+    if (bar) bar.textContent = 'Test version · shifts and pay are still sample data';
+    liveExpert().then(function (ok) { if (ok) fn(); });
+  }
 
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-lang]');
@@ -105,17 +144,35 @@
       }, 1000);
       el.textContent = 'Didn’t get it? Resend in 0:45';
     }
+    var codeErr = document.createElement('p');
+    codeErr.className = 'm s'; codeErr.setAttribute('role', 'alert'); codeErr.style.cssText = 'color:#FF8A80;margin:0';
+    verify.parentNode.insertBefore(codeErr, verify);
+    if (DB.live) {
+      var bar = document.querySelector('.preview-bar'); if (bar) bar.textContent = 'Test version · sign in with your phone number';
+      /* already signed in as an expert: go straight on */
+      DB.session().then(function (id) { return id && DB.loadMe(); }).then(function (me) {
+        if (me && me.role === 'expert') { applyExpert(me); location.replace(next); }
+      }).catch(function () {});
+    }
+    function showCode() {
+      $('#sentTo').textContent = 'Sent by SMS to +852 ' + state.phone;
+      stepPhone.hidden = true; stepCode.hidden = false; codeErr.textContent = '';
+      boxes.forEach(function (b) { b.value = ''; }); check(); boxes[0].focus(); countdown();
+    }
     $('#phoneForm').addEventListener('submit', function (e) {
       e.preventDefault();
       var d = $('#phone').value.replace(/\D/g, '').slice(0, 8);
       if (d.length !== 8) { $('#phoneErr').textContent = 'Enter an 8-digit Hong Kong number.'; $('#phone').focus(); return; }
       state.phone = d.slice(0, 4) + ' ' + d.slice(4);
-      $('#sentTo').textContent = 'Sent by SMS to +852 ' + state.phone;
-      stepPhone.hidden = true; stepCode.hidden = false;
-      boxes.forEach(function (b) { b.value = ''; }); check(); boxes[0].focus(); countdown();
+      if (!DB.live) { showCode(); return; }
+      var b = e.target.querySelector('button[type="submit"]'); b.disabled = true; $('#phoneErr').textContent = '';
+      DB.sendCode(d).then(function () { b.disabled = false; showCode(); }, function (x) { b.disabled = false; $('#phoneErr').textContent = x.message; });
     });
     $('#changeNumber').addEventListener('click', function () { stepCode.hidden = true; stepPhone.hidden = false; clearInterval(timer); $('#phone').focus(); });
-    $('#resend').addEventListener('click', function () { toast('New code sent'); countdown(); });
+    $('#resend').addEventListener('click', function () {
+      if (!DB.live) { toast('New code sent'); countdown(); return; }
+      DB.sendCode(state.phone.replace(/\D/g, '')).then(function () { toast('New code sent'); countdown(); }, function (x) { codeErr.textContent = x.message; });
+    });
     boxes.forEach(function (b, i) {
       b.addEventListener('input', function () {
         var v = b.value.replace(/\D/g, '');
@@ -128,20 +185,32 @@
     });
     $('#codeForm').addEventListener('submit', function (e) {
       e.preventDefault(); if (verify.disabled) return;
-      state.signedIn = true; save(state); location.href = next;
+      if (!DB.live) { state.signedIn = true; save(state); location.href = next; return; }
+      var code = boxes.map(function (b) { return b.value; }).join('');
+      verify.disabled = true; verify.textContent = 'Checking…'; codeErr.textContent = '';
+      DB.verifyCode(state.phone.replace(/\D/g, ''), code).then(function () { return DB.loadMe(); }).then(function (me) {
+        if (me && me.role === 'expert') { applyExpert(me); location.href = next; return; }
+        if (me && me.role === 'organiser') { location.href = '/#/'; return; }
+        return DB.signOut().then(function () { throw new Error('There’s no expert account for this number yet. Join in the AXPER app first.'); });
+      }).catch(function (x) { verify.disabled = false; verify.textContent = 'Verify and sign in'; codeErr.textContent = x.message; });
     });
   }
 
   /* ---------- W4 expert dashboard ---------- */
-  if (page === 'dashboard' && !needSignIn()) {
+  if (page === 'dashboard') whenSignedIn(function () {
     var first = (state.name || '').split(' ')[0];
     var hour = new Date().getHours();
     $('#hello').textContent = (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening') + (first ? ', ' + first : '');
+    $('#today').textContent = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Hong_Kong', weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
     $('#me').textContent = initials(state.name);
     var booked = OFFERS.filter(function (o) { return state.offers[o.id] === 'accepted'; }).sort(function (a, b) { return a.sort - b.sort; });
     var open = OFFERS.filter(function (o) { return !state.offers[o.id]; });
     var v = state.verify;
-    $('#badges').innerHTML = (v === 'verified' ? '<span class="tag lime">✓ Verified</span>' : v === 'review' ? '<span class="tag" style="color:var(--warn)">ID in review</span>' : '<a class="tag" href="/#/verify" style="color:var(--warn);text-decoration:none">Verify your ID</a>') +
+    $('#badges').innerHTML = (v === 'verified' ? '<span class="tag lime">✓ Verified</span>' :
+      v === 'paused' ? '<span class="tag" style="color:var(--warn)">Offers paused</span>' :
+      v === 'review' && !state.interviewAt ? '<a class="tag" href="/#/interview" style="color:var(--warn);text-decoration:none">Book your interview</a>' :
+      v === 'review' ? '<span class="tag" style="color:var(--warn)">ID in review · interview ' + esc(state.interviewAt) + '</span>' :
+      '<a class="tag" href="/#/verify" style="color:var(--warn);text-decoration:none">Verify your ID</a>') +
       '<span class="tag">' + booked.length + ' shift' + (booked.length === 1 ? '' : 's') + ' booked</span>';
 
     var nx = booked[0];
@@ -205,10 +274,10 @@
         '<button class="link-btn" style="color:var(--text);padding:0;min-height:0" data-soon="Payouts by FPS are coming in the next build">' + c[3] + '</button>';
       return '<div class="line"><span>' + c[0] + '</span>' + right + '</div>';
     }).join('');
-  }
+  });
 
   /* ---------- W5 shift details ---------- */
-  if (page === 'shift' && !needSignIn()) {
+  if (page === 'shift') whenSignedIn(function () {
     var o = offer(new URLSearchParams(location.search).get('id')) || OFFERS[0];
     document.title = o.role + ' · ' + o.event + ' · AXPER';
     function render() {
@@ -252,5 +321,5 @@
       save(state); render();
     });
     render();
-  }
+  });
 })();

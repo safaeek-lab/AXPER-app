@@ -49,6 +49,7 @@
     };
   }
   var state = load();
+  var uploading = {}; /* ID photos on their way up, by key */
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
@@ -312,29 +313,77 @@
 
   screens.verify = function () {
     if (needAccount()) return '';
+    if (state.verify !== 'none') {
+      /* already sent: show where things stand instead of the upload boxes */
+      var st = state.verify === 'verified' ? ['✓ Verified', 'Your ID and interview are done. You get shift offers that match your roles and free days.'] :
+        state.verify === 'paused' ? ['Paused', 'AXPER has paused your offers for now. We’ll be in touch by SMS.'] :
+        ['ID in review', 'AXPER checks your photos, usually within 1 working day.' + (state.interviewAt ? ' Your interview: ' + esc(state.interviewAt) + '.' : '')];
+      return '<div class="row between">' + backBtn('/offers') + '<span class="m">Your ID</span></div>' +
+        '<div><h1>Verify your ID</h1></div>' +
+        '<div class="card" style="display:flex;flex-direction:column;gap:8px"><span class="badge' + (state.verify === 'verified' ? '' : ' wait') + '" style="align-self:flex-start">' + st[0] + '</span>' +
+        '<p class="m" style="margin:0">' + st[1] + '</p></div>' +
+        (state.verify === 'review' ? '<a class="btn' + (state.interviewAt ? ' ghost' : '') + '" href="#/interview">' + (state.interviewAt ? 'Change interview time' : 'Book your interview') + '</a>' : '') +
+        '<div class="grow"></div><a class="btn ghost small" href="#/offers">Back to offers</a>';
+    }
     function task(key, title, sub, ico, round, capture) {
-      var done = state[key];
+      var done = state[key], up = uploading[key];
       return '<label class="task' + (done ? ' done' : '') + '" style="position:relative">' +
         '<span class="ico" style="' + (round ? 'border-radius:24px' : '') + '">' + ico + '</span>' +
         '<span class="grow"><span style="display:block;font-size:18px;font-weight:600">' + title + '</span><span class="m s" style="display:block">' + sub + '</span></span>' +
-        '<span class="status">' + (done ? '✓ Added' : (key === 'selfie' ? 'Take' : 'Add')) + '</span>' +
-        '<input class="file" type="file" accept="image/*"' + (capture ? ' capture="' + capture + '"' : '') + ' data-file="' + key + '" aria-label="' + title + '"></label>';
+        '<span class="status">' + (up ? 'Uploading…' : done ? '✓ Added' : (key === 'selfie' ? 'Take' : 'Add')) + '</span>' +
+        '<input class="file" type="file" accept="image/*"' + (capture ? ' capture="' + capture + '"' : '') + ' data-file="' + key + '" aria-label="' + title + '"' + (up ? ' disabled' : '') + '></label>';
     }
-    var ready = state.idPhoto && state.selfie;
+    var ready = state.idPhoto && state.selfie && !uploading.idPhoto && !uploading.selfie;
     return '<div class="row between">' + backBtn('/join') + '<span class="m">Step 2 of 2</span></div>' + progress(2, 2) +
       '<div><h1>Verify your ID</h1><p class="m" style="margin-top:6px">Organisers see a verified badge on your profile.</p></div>' +
       task('idPhoto', 'Photo of your ID', 'Hong Kong ID card', I.id, false, 'environment') +
       task('selfie', 'Picture', 'To match your ID', I.person, true, 'user') +
-      '<div class="card"><h2>What happens next</h2><p class="m" style="margin-top:6px">We review your ID and show the status on your profile. You can browse shifts while you wait.</p></div>' +
+      '<div class="card"><h2>What happens next</h2><p class="m" style="margin-top:6px">We check your ID, then you book a 15-minute interview with AXPER. You can browse shifts while you wait.</p></div>' +
+      '<p class="m s" id="verifyErr" role="alert" style="color:#FF8A80"></p>' +
       '<div class="grow"></div><button class="btn" id="submitVerify"' + (ready ? '' : ' disabled') + '>Submit for review</button>' +
-      '<p class="m s center">Preview: photos stay on this phone and are not uploaded.</p>';
+      '<p class="m s center">' + (DB.live ? 'Only you and the AXPER team can see your photos.' : 'Preview: photos stay on this phone and are not uploaded.') + '</p>';
+  };
+
+  /* E2b: book the AXPER interview. Weekdays and Saturdays for the next 8 days, four times a day (Hong Kong time). */
+  var SLOT_TIMES = ['10:00', '11:30', '14:00', '16:30'];
+  function slotDays() {
+    var out = [], d = new Date();
+    while (out.length < 6) {
+      d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+      if (d.getDay() !== 0) out.push(d);
+    }
+    return out;
+  }
+  function dayLabel(d) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()] + ' ' + d.getDate(); }
+  function slotIso(d, t) {
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + t + ':00+08:00';
+  }
+  screens.interview = function () {
+    if (needAccount()) return '';
+    if (state.verify === 'none') { go('/verify'); return ''; }
+    var days = slotDays(), pick = state.slotPick || {};
+    var day = days.filter(function (d) { return dayLabel(d) === pick.day; })[0];
+    var label = day && pick.time ? dayLabel(day) + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][day.getMonth()] + ', ' + pick.time : '';
+    return '<div class="row between">' + backBtn('/verify') + '<span class="m">Step 2 of 2</span></div>' + progress(2, 2) +
+      '<div><h1>Book your interview</h1><p class="m" style="margin-top:6px">A 15-minute video call with the AXPER team. You get offers once you pass.</p></div>' +
+      '<div><p class="label" id="dayL">Day</p><div class="chips" role="group" aria-labelledby="dayL">' + days.map(function (d) {
+        return '<button type="button" class="chip" data-slot="day" data-val="' + dayLabel(d) + '" aria-pressed="' + (pick.day === dayLabel(d)) + '">' + dayLabel(d) + '</button>'; }).join('') + '</div></div>' +
+      '<div><p class="label" id="timeL">Time</p><div class="chips" role="group" aria-labelledby="timeL">' + SLOT_TIMES.map(function (t) {
+        return '<button type="button" class="chip" data-slot="time" data-val="' + t + '" aria-pressed="' + (pick.time === t) + '">' + t + '</button>'; }).join('') + '</div></div>' +
+      (state.interviewAt ? '<div class="card row" style="gap:12px"><span class="badge">Booked</span><span class="m s">' + esc(state.interviewAt) + '</span></div>' : '') +
+      '<p class="m s" id="slotErr" role="alert" style="color:#FF8A80"></p>' +
+      '<div class="grow"></div><button class="btn" data-act="bookSlot"' + (label ? '' : ' disabled') + '>' + (label ? 'Book ' + label : 'Pick a day and time') + '</button>' +
+      '<p class="m s center">We send the video link by SMS.</p>';
   };
 
   screens.offers = function () {
     if (needAccount()) return '';
     var first = (state.name || 'there').split(' ')[0];
     var badge = state.verify === 'verified' ? '<span class="badge">✓ Verified</span>' :
-      state.verify === 'review' ? '<span class="badge wait">ID in review</span>' :
+      state.verify === 'paused' ? '<a class="badge wait" href="#/verify" style="text-decoration:none">Paused</a>' :
+      state.verify === 'review' && !state.interviewAt ? '<a class="badge wait" href="#/interview" style="text-decoration:none">Book interview</a>' :
+      state.verify === 'review' ? '<a class="badge wait" href="#/verify" style="text-decoration:none">ID in review</a>' :
       '<a class="badge wait" href="#/verify" style="text-decoration:none">Verify ID</a>';
     var list = OFFERS.map(function (o) {
       var st = state.offers[o.id];
@@ -516,11 +565,21 @@
         state.langs = {}; me.expert.languages.forEach(function (l) { state.langs[l] = true; });
       }
       if (me.days && Object.keys(me.days).length) { state.days = me.days; state.times = me.times; }
-      return state.verify === 'none' && !state.idPhoto ? '/verify' : '/offers';
+      var ex = me.expert || {}, s = ex.status;
+      state.verify = s === 'approved' ? 'verified' : s === 'paused' ? 'paused' : s === 'id_review' || s === 'interview' ? 'review' : 'none';
+      if (s === 'applied') { state.idPhoto = false; state.selfie = false; } /* nothing sent yet, or AXPER asked for new photos */
+      state.interviewAt = ex.interview_at ? interviewLabel(ex.interview_at) : '';
+      return state.verify === 'none' ? '/verify' : state.verify === 'review' && !state.interviewAt ? '/interview' : '/offers';
     }
     return '/';
   }
   function picked(map) { return Object.keys(map).filter(function (k) { return map[k]; }); }
+  /* "2026-12-03T06:00:00+00:00" -> "Thu 3 Dec, 14:00" in Hong Kong time */
+  function interviewLabel(iso) {
+    var p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Hong_Kong', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date(iso));
+    var g = {}; p.forEach(function (x) { g[x.type] = x.value; });
+    return g.weekday + ' ' + g.day + ' ' + g.month + ', ' + g.hour + ':' + g.minute;
+  }
   function liveVerify(btn) {
     var err = document.getElementById('codeErr');
     var code = Array.prototype.map.call(app.querySelectorAll('.code'), function (b) { return b.value; }).join('');
@@ -570,11 +629,29 @@
       go(state.verify === 'none' && !state.idPhoto ? '/verify' : '/offers'); return;
     }
     if (t.id === 'submitVerify') {
-      state.verify = 'review'; save(); go('/offers');
-      setTimeout(function () { state.verify = 'verified'; save(); if (location.hash === '#/offers') render(); toast('Your ID is verified'); }, 4000);
+      if (!DB.live) { state.verify = 'review'; save(); go('/interview'); return; }
+      t.disabled = true; t.textContent = 'Sending…';
+      DB.submitId().then(function () { state.verify = 'review'; save(); go('/interview'); toast('Photos sent to AXPER'); },
+        function (x) { t.disabled = false; t.textContent = 'Submit for review'; document.getElementById('verifyErr').textContent = x.message; });
       return;
     }
+    if (t.dataset.slot) {
+      state.slotPick = state.slotPick || {}; state.slotPick[t.dataset.slot] = t.dataset.val; save(); render(); return;
+    }
     var act = t.dataset.act, id = t.dataset.id;
+    if (act === 'bookSlot') {
+      var pk = state.slotPick || {}, d = slotDays().filter(function (x) { return dayLabel(x) === pk.day; })[0];
+      if (!d || !pk.time) return;
+      var iso = slotIso(d, pk.time);
+      function booked() {
+        state.interviewAt = interviewLabel(iso); save(); go('/offers'); toast('Interview booked for ' + state.interviewAt);
+        if (!DB.live) setTimeout(function () { state.verify = 'verified'; save(); if (location.hash === '#/offers') render(); toast('Preview: you passed. Your ID is verified'); }, 4000);
+      }
+      if (!DB.live) { booked(); return; }
+      t.disabled = true; t.textContent = 'Booking…';
+      DB.bookInterview(iso).then(booked, function (x) { t.disabled = false; t.textContent = 'Try again'; document.getElementById('slotErr').textContent = x.message; });
+      return;
+    }
     if (act === 'resend') {
       if (!DB.live) { toast('New code sent'); return; }
       DB.sendCode(cleanPhone(state.mode === 'organiser' ? state.org.phone : state.phone))
@@ -631,16 +708,24 @@
       return;
     }
     var key = e.target.dataset && e.target.dataset.file;
-    if (key && e.target.files && e.target.files.length) { state[key] = true; save(); render(); }
+    if (!key || !e.target.files || !e.target.files.length) return;
+    if (!DB.live) { state[key] = true; save(); render(); return; }
+    uploading[key] = true; render();
+    DB.uploadId(key === 'idPhoto' ? 'id' : 'selfie', e.target.files[0]).then(function () {
+      uploading[key] = false; state[key] = true; save(); render();
+    }, function (x) {
+      uploading[key] = false; render();
+      var err = document.getElementById('verifyErr'); if (err) err.textContent = x.message; else toast(x.message);
+    });
   });
 
-  /* finish a review that was interrupted by closing the page */
-  if (state.verify === 'review') setTimeout(function () { state.verify = 'verified'; save(); if (location.hash === '#/offers') render(); }, 4000);
+  /* preview only: finish a review that was interrupted by closing the page */
+  if (!DB.live && state.verify === 'review' && state.interviewAt) setTimeout(function () { state.verify = 'verified'; save(); if (location.hash === '#/offers') render(); }, 4000);
 
   if (!DB.live) { render(); return; }
   /* live: the signed-in session decides who you are, not what this browser remembers */
   var bar = document.querySelector('.preview-bar');
-  if (bar) bar.textContent = 'Test version · ID checks, offers and payments are still simulated';
+  if (bar) bar.textContent = 'Test version · offers and payments are still simulated';
   DB.session().then(function (id) {
     if (!id) { state.signedIn = false; state.org.signedIn = false; state.uid = null; save(); return null; }
     return DB.loadMe().then(function (me) { if (me) { applyMe(me); save(); } });

@@ -33,7 +33,15 @@ ID checks, matching, offers and payments are still simulated. They come in steps
 3. Upload `config.js` to GitHub. Vercel redeploys on its own.
    - The bar at the top of the app then says "Test version".
 
-## 4. Make yourself an admin (for the admin console in step 2)
+## 4. Step 2: ID photos and the admin console
+
+1. In **SQL Editor**, run all of `step2.sql` once. It adds:
+   - the private `id-docs` storage bucket for ID photos and selfies
+   - the interview booking
+   - the admin actions
+2. The admin console is at `/admin/` on your site, for example `axper-app.vercel.app/admin/`. Only profiles with the role `admin` get in (see below).
+
+## 5. Make yourself an admin
 
 First sign in to the app once with your own number, as an organiser. Then run this in the SQL Editor, using your number with 852 in front and no plus sign or spaces:
 
@@ -53,3 +61,7 @@ Each of these is refused by the database itself, whatever the app sends:
 - An organiser can't switch their own plan to Pro. They can only record that they chose it, and the payment step sets the real plan.
 - Event prices are worked out by the database, from hours × experts × HK$80 + 10%. The app can't send its own total.
 - A phone number belongs to either an organiser or an expert, not both.
+- ID photos and selfies are in private storage.
+  - Only that expert and AXPER admins can open them, and only through links that expire after 10 minutes.
+  - Experts can't change their photos once their ID has been checked.
+- Approving experts, setting tiers and marking payouts paid only work for admins. Each one is a database function that checks who is calling.
