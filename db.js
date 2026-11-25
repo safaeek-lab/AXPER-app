@@ -172,5 +172,62 @@
     }
   };
 
+  /* ---------- step 2: ID photos, interview, admin ---------- */
+  var BUCKET = 'id-docs';
+
+  /* Phone photos can be 5 MB or more: shrink to 1600 px JPEG before upload. Falls back to the original file. */
+  async function shrink(file) {
+    try {
+      var img = await createImageBitmap(file);
+      var k = Math.min(1, 1600 / Math.max(img.width, img.height));
+      var c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      var blob = await new Promise(function (r) { c.toBlob(r, 'image/jpeg', 0.85); });
+      return blob || file;
+    } catch (e) { return file; }
+  }
+  function rpcError(e) { return new Error(nice(e)); }
+
+  Object.assign(DB, {
+    /* kind: 'id' or 'selfie' */
+    uploadId: async function (kind, file) {
+      var id = await uid(); if (!id) throw new Error('Sign in again to upload.');
+      var body = await shrink(file);
+      var res = await sb.storage.from(BUCKET).upload(id + '/' + kind, body, { upsert: true, contentType: body.type || 'image/jpeg' });
+      if (res.error) throw new Error(/row-level security|unauthorized|403/i.test(res.error.message) ? 'Your ID has already been checked, so photos can’t be changed.' : nice(res.error));
+    },
+    submitId: async function () {
+      var res = await sb.rpc('submit_id'); if (res.error) throw rpcError(res.error); return res.data;
+    },
+    bookInterview: async function (iso) {
+      var res = await sb.rpc('book_interview', { slot: iso }); if (res.error) throw rpcError(res.error); return res.data;
+    },
+
+    /* admin console */
+    adminExperts: async function () {
+      return ok(await sb.from('experts').select('*, profiles(name, phone, created_at)').order('created_at', { ascending: false }));
+    },
+    signedUrls: async function (paths) {
+      if (!paths.length) return {};
+      var res = ok(await sb.storage.from(BUCKET).createSignedUrls(paths, 600)), out = {};
+      res.forEach(function (r) { if (r.signedUrl) out[r.path] = r.signedUrl; });
+      return out;
+    },
+    adminReview: async function (expert, action, tier) {
+      var res = await sb.rpc('admin_review_expert', { expert: expert, action: action, new_tier: tier || null });
+      if (res.error) throw rpcError(res.error); return res.data;
+    },
+    adminEvents: async function () {
+      return ok(await sb.from('events').select('*, organisations(name, plan, plan_choice, profiles(name, phone))').order('date', { ascending: true }));
+    },
+    adminPayouts: async function () {
+      return ok(await sb.from('payouts').select('*, experts(payout_name, fps_id, profiles(name, phone))').order('week_start', { ascending: false }));
+    },
+    markPaid: async function (id, ref) {
+      var res = await sb.rpc('admin_mark_payout_paid', { payout: id, ref: ref });
+      if (res.error) throw rpcError(res.error); return res.data;
+    }
+  });
+
   window.AXPER_DB = DB;
 })();
