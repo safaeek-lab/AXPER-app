@@ -8,7 +8,7 @@
 <title>Axper</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="apple-touch-icon" href="/icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,6 +16,17 @@
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+<div id="splash" aria-hidden="true"><div class="mk"><div class="a stroke"><img src="/logo.png" alt=""></div><div class="a person"><img src="/logo.png" alt=""></div></div></div>
+<script>
+/* A00 opening logo: once per visit, about 1.4 s, then the app shows */
+(function () {
+  var s = document.getElementById('splash'), seen = false;
+  try { seen = sessionStorage.getItem('axper.splash') === '1'; sessionStorage.setItem('axper.splash', '1'); } catch (e) {}
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (seen) { s.remove(); return; }
+  setTimeout(function () { s.remove(); }, reduce ? 500 : 1450);
+})();
+</script>
 <div class="preview-bar" role="note">Preview · codes, ID checks and payments are simulated</div>
 <main id="app" class="screen" aria-live="polite"></main>
 <script src="/config.js"></script>

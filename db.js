@@ -86,6 +86,15 @@
       try { ok(await sb.auth.verifyOtp({ phone: e164(digits), token: code, type: 'sms' })); }
       catch (e) { throw new Error(nice(e)); }
     },
+    /* Email sign-in: Supabase emails a 6-digit code. The Magic Link email template must include {{ .Token }}. */
+    sendEmailCode: async function (email) {
+      try { ok(await sb.auth.signInWithOtp({ email: email })); }
+      catch (e) { throw new Error(nice(e)); }
+    },
+    verifyEmailCode: async function (email, code) {
+      try { ok(await sb.auth.verifyOtp({ email: email, token: code, type: 'email' })); }
+      catch (e) { throw new Error(nice(e)); }
+    },
     signOut: async function () { if (live) await sb.auth.signOut(); },
 
     /* Everything the app needs after sign-in, or null if this number has no account yet. */
